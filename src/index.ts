@@ -160,6 +160,9 @@ export class SeededRandom {
    * @returns Array of shuffled indices
    */
   generateShuffleIndices(length: number): number[] {
+    if (!Number.isFinite(length) || length < 0 || !Number.isInteger(length)) {
+      throw new Error("Length must be a non-negative integer");
+    }
     const indices = Array.from({ length }, (_, i) => i);
     return this.shuffle(indices);
   }
