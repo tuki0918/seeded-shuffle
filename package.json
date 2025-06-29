@@ -1,7 +1,7 @@
 {
-  "name": "npm-package-template",
-  "version": "0.0.1",
-  "description": "",
+  "name": "seeded-shuffle",
+  "version": "0.1.0",
+  "description": "A pseudo-random array shuffling library using Linear Congruential Generator (LCG).",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -18,11 +18,19 @@
     "test:ci": "vitest run",
     "test:coverage": "vitest --coverage"
   },
-  "keywords": [],
+  "keywords": [
+    "random",
+    "shuffle",
+    "seeded",
+    "deterministic",
+    "array",
+    "pseudo-random",
+    "lcg"
+  ],
   "author": "tuki0918",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tuki0918/NPM-PACKAGE-TEMPLATE.git"
+    "url": "https://github.com/tuki0918/seeded-shuffle.git"
   },
   "license": "MIT",
   "devDependencies": {
