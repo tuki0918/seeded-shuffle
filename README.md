@@ -12,7 +12,7 @@ A pseudo-random array shuffling library using Linear Congruential Generator (LCG
 ## Installation
 
 ```bash
-npm install seeded-shuffle
+npm i @tuki0918/seeded-shuffle
 ```
 
 ## Quick Start
@@ -20,7 +20,7 @@ npm install seeded-shuffle
 ### Simple Array Shuffling
 
 ```typescript
-import { shuffle, unshuffle } from 'seeded-shuffle';
+import { shuffle, unshuffle } from "@tuki0918/seeded-shuffle";
 
 const array = [1, 2, 3, 4, 5];
 
