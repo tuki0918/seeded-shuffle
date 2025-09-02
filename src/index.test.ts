@@ -493,6 +493,231 @@ describe("Functional API", () => {
   });
 });
 
+describe("PCG Algorithm Tests", () => {
+  it("should have much longer period than LCG (demonstrative test)", () => {
+    const rng = new SeededRandom(12345);
+
+    // Test that we can generate far more than 233,280 unique values
+    // This test runs for a limited time but demonstrates longer period
+    const uniqueValues = new Set();
+    const maxIterations = 500000; // Much larger than LCG period
+
+    for (let i = 0; i < maxIterations; i++) {
+      const value = rng.next();
+
+      // Ensure values are in valid range
+      expect(value).toBeGreaterThanOrEqual(0);
+      expect(value).toBeLessThan(1);
+      expect(Number.isFinite(value)).toBe(true);
+
+      uniqueValues.add(value);
+
+      // Early termination if we find a repeat (shouldn't happen with PCG)
+      if (i > 1000 && uniqueValues.size < i * 0.99) {
+        break; // Too many duplicates, something's wrong
+      }
+    }
+
+    // PCG should produce many more unique values than LCG
+    expect(uniqueValues.size).toBeGreaterThan(400000); // Much higher than LCG's 233,280
+  });
+
+  it("should maintain deterministic behavior with same seeds", () => {
+    const seed = 42;
+    const rng1 = new SeededRandom(seed);
+    const rng2 = new SeededRandom(seed);
+
+    // Generate long sequences and compare
+    const sequence1 = [];
+    const sequence2 = [];
+
+    for (let i = 0; i < 10000; i++) {
+      sequence1.push(rng1.next());
+      sequence2.push(rng2.next());
+    }
+
+    expect(sequence1).toEqual(sequence2);
+  });
+
+  it("should handle very large seed values correctly", () => {
+    const largeSeed = Number.MAX_SAFE_INTEGER;
+    const rng = new SeededRandom(largeSeed);
+
+    // Should not throw and should produce valid values
+    for (let i = 0; i < 1000; i++) {
+      const value = rng.next();
+      expect(value).toBeGreaterThanOrEqual(0);
+      expect(value).toBeLessThan(1);
+      expect(Number.isFinite(value)).toBe(true);
+    }
+  });
+
+  it("should produce valid random values in range [0, 1)", () => {
+    const rng = new SeededRandom(12345);
+    const sampleSize = 10000;
+
+    for (let i = 0; i < sampleSize; i++) {
+      const value = rng.next();
+
+      // All values should be in valid range
+      expect(value).toBeGreaterThanOrEqual(0);
+      expect(value).toBeLessThan(1);
+      expect(Number.isFinite(value)).toBe(true);
+      expect(typeof value).toBe("number");
+    }
+
+    // Test with different seeds to ensure variety
+    const values1 = [];
+    const values2 = [];
+
+    const rng1 = new SeededRandom(1111);
+    const rng2 = new SeededRandom(2222);
+
+    for (let i = 0; i < 100; i++) {
+      values1.push(rng1.next());
+      values2.push(rng2.next());
+    }
+
+    // Different seeds should produce different sequences
+    expect(values1).not.toEqual(values2);
+  });
+
+  it("should handle string seeds with long text content", () => {
+    // Test with very long string
+    const longString = "Lorem ipsum ".repeat(1000);
+    const rng1 = new SeededRandom(longString);
+    const rng2 = new SeededRandom(longString);
+
+    // Should be deterministic even with long strings
+    for (let i = 0; i < 100; i++) {
+      expect(rng1.next()).toBe(rng2.next());
+    }
+
+    // Test with unicode characters
+    const unicodeString = "🎲🎯🎪".repeat(500);
+    const rng3 = new SeededRandom(unicodeString);
+    const rng4 = new SeededRandom(unicodeString);
+
+    for (let i = 0; i < 100; i++) {
+      expect(rng3.next()).toBe(rng4.next());
+    }
+  });
+
+  it("should handle massive array shuffling without period limitations", () => {
+    // Create very large array that would exceed LCG period
+    const largeArray = Array.from({ length: 300000 }, (_, i) => i);
+    const rng = new SeededRandom(12345);
+
+    const shuffled = rng.shuffle(largeArray);
+
+    // Verify all elements are preserved
+    const sortedShuffled = [...shuffled].sort((a, b) => a - b);
+    expect(sortedShuffled).toEqual(largeArray);
+
+    // Verify it's actually shuffled
+    let samePosition = 0;
+    for (let i = 0; i < largeArray.length; i++) {
+      if (shuffled[i] === largeArray[i]) {
+        samePosition++;
+      }
+    }
+
+    // Less than 0.1% should be in same position for good shuffle
+    expect(samePosition).toBeLessThan(largeArray.length * 0.001);
+  });
+
+  it("should demonstrate improved quality over multiple resets", () => {
+    const results = [];
+
+    // Test multiple seed resets and generate sequences (reduced scale)
+    for (let seed = 1; seed <= 100; seed++) {
+      const rng = new SeededRandom(seed);
+      const sequence = [];
+
+      for (let i = 0; i < 100; i++) {
+        sequence.push(rng.next());
+      }
+
+      results.push(sequence);
+    }
+
+    // All sequences should be different
+    for (let i = 0; i < results.length; i++) {
+      for (let j = i + 1; j < Math.min(results.length, i + 10); j++) {
+        // Only check subset to avoid timeout
+        expect(results[i]).not.toEqual(results[j]);
+      }
+    }
+  });
+
+  it("should handle choice operations on very large arrays", () => {
+    const largeArray = Array.from({ length: 10000 }, (_, i) => `item${i}`); // Reduced size
+    const rng = new SeededRandom(12345);
+
+    // Test single choice
+    const singleChoice = rng.choice(largeArray);
+    expect(largeArray).toContain(singleChoice);
+
+    // Test multiple choices with replacement
+    const manyChoices = rng.choices(largeArray, 5000); // Reduced size
+    expect(manyChoices).toHaveLength(5000);
+    manyChoices.forEach((choice) => expect(largeArray).toContain(choice));
+
+    // Test unique choices
+    rng.reset(12345);
+    const uniqueChoices = rng.choices(largeArray, 1000, { unique: true }); // Reduced size
+    expect(uniqueChoices).toHaveLength(1000);
+    expect(new Set(uniqueChoices).size).toBe(1000);
+  });
+
+  it("should maintain consistency across different operations with same seed", () => {
+    const seed = "test-consistency";
+
+    // Test shuffle consistency
+    const array = Array.from({ length: 50000 }, (_, i) => i);
+    const rng1 = new SeededRandom(seed);
+    const rng2 = new SeededRandom(seed);
+
+    const shuffled1 = rng1.shuffle(array);
+    const shuffled2 = rng2.shuffle(array);
+
+    expect(shuffled1).toEqual(shuffled2);
+
+    // Test choice consistency
+    rng1.reset(seed);
+    rng2.reset(seed);
+
+    const choices1 = rng1.choices(array.slice(0, 1000), 500);
+    const choices2 = rng2.choices(array.slice(0, 1000), 500);
+
+    expect(choices1).toEqual(choices2);
+  });
+
+  it("should generate quality random integers across large ranges", () => {
+    const rng = new SeededRandom(12345);
+    const min = -100000;
+    const max = 100000;
+    const sampleSize = 10000; // Reduced sample size
+
+    const results = [];
+    for (let i = 0; i < sampleSize; i++) {
+      const value = rng.randInt(min, max);
+      expect(value).toBeGreaterThanOrEqual(min);
+      expect(value).toBeLessThanOrEqual(max);
+      expect(Number.isInteger(value)).toBe(true);
+      results.push(value);
+    }
+
+    // Check distribution across the range
+    const uniqueValues = new Set(results);
+    expect(uniqueValues.size).toBeGreaterThan(sampleSize * 0.5); // More realistic expectation
+
+    // Check that both extremes can be reached
+    expect(results.some((v) => v < min + 10000)).toBe(true); // Near minimum
+    expect(results.some((v) => v > max - 10000)).toBe(true); // Near maximum
+  });
+});
+
 describe("Performance Tests", () => {
   it("should handle very large arrays efficiently", () => {
     const largeArray = Array.from({ length: 50000 }, (_, i) => i);
