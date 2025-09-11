@@ -49,46 +49,9 @@ console.log(restored2); // [1, 2, 3, 4, 5] - back to original!
 This library uses a Permuted Congruential Generator (PCG) algorithm for high-quality randomness:
 - **Period**: 2^64 (effectively unlimited for practical purposes)
 - **Performance**: Fast generation suitable for high-volume applications
-- **Quality**: Excellent statistical properties for professional use
 
-PCG provides superior randomness compared to traditional Linear Congruential Generators while maintaining excellent performance for large-scale applications.
-
-**Note**: This is not suitable for cryptographic purposes.
-
-## Performance and Scale
-
-This library is designed to handle large-scale applications efficiently:
-
-- ✅ **Large Arrays**: Successfully tested with arrays up to 300,000+ elements
-- ✅ **High Volume**: Suitable for millions of shuffle operations without repetition
-- ✅ **Professional Use**: Production-ready for simulations, big data, and enterprise applications
-- ✅ **Memory Efficient**: Minimal memory overhead with optimized BigInt state management
-
-### Example: Large-Scale Usage
-
-```typescript
-import { shuffle, SeededRandom } from "@tuki0918/seeded-shuffle";
-
-// Large array shuffling - no period limitations
-const largeArray = new Array(500000).fill(0).map((_, i) => i);
-const shuffled = shuffle(largeArray, "production-seed");
-
-// High-volume random number generation
-const rng = new SeededRandom(12345);
-for (let i = 0; i < 1000000; i++) {
-  const value = rng.next(); // No repetition concerns
-  // Process your data...
-}
-
-// Long-running applications
-const gameRng = new SeededRandom("game-session-123");
-// Generate millions of random values without period limitations
-for (let round = 0; round < 10000000; round++) {
-  const dice = gameRng.randInt(1, 6);
-  // Your game logic...
-}
-```
-
+> [!WARNING]
+> This is not suitable for cryptographic purposes.
 
 ## License
 
