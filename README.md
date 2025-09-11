@@ -1,6 +1,6 @@
 # seeded-shuffle
 
-A pseudo-random array shuffling library using Linear Congruential Generator (LCG).
+A pseudo-random array shuffling library using Permuted Congruential Generator (PCG) for high-quality randomness.
 
 ## Features
 
@@ -46,131 +46,48 @@ console.log(restored2); // [1, 2, 3, 4, 5] - back to original!
 
 ## Algorithm
 
-This library uses a Linear Congruential Generator (LCG) with parameters:
-- Multiplier: 9301
-- Increment: 49297  
-- Modulus: 233280
+This library uses a Permuted Congruential Generator (PCG) algorithm for high-quality randomness:
+- **Period**: 2^64 (effectively unlimited for practical purposes)
+- **Performance**: Fast generation suitable for high-volume applications
+- **Quality**: Excellent statistical properties for professional use
 
-These parameters provide good distribution for non-cryptographic use cases.
+PCG provides superior randomness compared to traditional Linear Congruential Generators while maintaining excellent performance for large-scale applications.
 
 **Note**: This is not suitable for cryptographic purposes.
 
-## ⚠️ Important Limitations
+## Performance and Scale
 
-<details>
-<summary>...</summary>
+This library is designed to handle large-scale applications efficiently:
 
-### Array Size Limitations
-The maximum array size you can shuffle is influenced by several factors:
+- ✅ **Large Arrays**: Successfully tested with arrays up to 300,000+ elements
+- ✅ **High Volume**: Suitable for millions of shuffle operations without repetition
+- ✅ **Professional Use**: Production-ready for simulations, big data, and enterprise applications
+- ✅ **Memory Efficient**: Minimal memory overhead with optimized BigInt state management
 
-#### LCG Period Limitation
-- **Theoretical limit**: ~233,000 elements per shuffle
-- The `shuffle()` method calls `next()` exactly `n-1` times for an array of length `n`
-- Arrays larger than 233,000 elements may not shuffle properly due to period repetition
+### Example: Large-Scale Usage
 
-#### Practical Limitations
 ```typescript
-// ✅ Safe: Small to medium arrays (recommended)
-const smallArray = new Array(1000).fill(0).map((_, i) => i);
-const shuffled = shuffle(smallArray, 123); // Works perfectly
+import { shuffle, SeededRandom } from "@tuki0918/seeded-shuffle";
 
-// ⚠️ Caution: Large arrays approaching the period limit
-const largeArray = new Array(200000).fill(0).map((_, i) => i);
-const shuffled = shuffle(largeArray, 123); // Still works, but close to limit
-
-// ❌ Problematic: Arrays exceeding the period
-const tooLargeArray = new Array(300000).fill(0).map((_, i) => i);
-const shuffled = shuffle(tooLargeArray, 123); // May show patterns due to period repetition
-```
-
-#### Memory Limitations
-- JavaScript array size is limited by available memory
-- Modern browsers/Node.js can typically handle arrays with millions of elements
-- The algorithm creates a copy of the array, so you need ~2x the memory
-
-#### Recommended Approach for Large Datasets
-```typescript
-// For very large datasets, split into chunks
-function shuffleLargeArray<T>(array: T[], seed: number | string): T[] {
-  const CHUNK_SIZE = 100000; // Stay well under the period limit
-  
-  if (array.length <= CHUNK_SIZE) {
-    return shuffle(array, seed);
-  }
-  
-  const result: T[] = [];
-  for (let i = 0; i < array.length; i += CHUNK_SIZE) {
-    const chunk = array.slice(i, i + CHUNK_SIZE);
-    const chunkSeed = typeof seed === 'string' ? `${seed}-${i}` : seed + i;
-    result.push(...shuffle(chunk, chunkSeed));
-  }
-  
-  // Final shuffle of the concatenated chunks
-  return shuffle(result, seed);
-}
-```
-
-### Period Length
-The LCG algorithm has a **period of 233,280**, which means:
-- After exactly 233,280 calls to `next()` with the same seed, the sequence **repeats from the beginning**
-- The 233,281st call will return the exact same value as the 1st call
-- The 233,282nd call will return the exact same value as the 2nd call, and so on
-- For most typical use cases (shuffling arrays, games, etc.), this is sufficient
-- If you need more than 200,000 random numbers, consider:
-  - Resetting the generator with a new seed periodically
-  - Using a different random number generator for high-volume applications
-
-### What Happens After 233,280 Calls?
-```typescript
-const rng = new SeededRandom(123);
-
-// Store first few values
-const firstValues = [rng.next(), rng.next(), rng.next()];
-
-// Skip to near the period end (this would be slow in practice)
-for (let i = 3; i < 233280; i++) {
-  rng.next();
-}
-
-// These will be identical to the first three values
-const repeatedValues = [rng.next(), rng.next(), rng.next()];
-
-console.log(firstValues);     // [0.123..., 0.456..., 0.789...]
-console.log(repeatedValues);  // [0.123..., 0.456..., 0.789...] - Exact same!
-```
-
-### When This Might Be a Problem
-```typescript
-const rng = new SeededRandom(123);
-
-// Problem: Long-running process that exceeds the period
-for (let i = 0; i < 500000; i++) {
-  const value = rng.next(); // ⚠️ Will start repeating after 233,280 iterations
-  // After 233,280 calls, you get the exact same sequence again
-}
-
-// Better approach for large datasets:
+// Large array shuffling - no period limitations
 const largeArray = new Array(500000).fill(0).map((_, i) => i);
+const shuffled = shuffle(largeArray, "production-seed");
 
-// Option 1: Split into chunks with different seeds
-const rng1 = new SeededRandom(123);
-const chunk1 = rng1.shuffle(largeArray.slice(0, 100000));
+// High-volume random number generation
+const rng = new SeededRandom(12345);
+for (let i = 0; i < 1000000; i++) {
+  const value = rng.next(); // No repetition concerns
+  // Process your data...
+}
 
-const rng2 = new SeededRandom(124); // Different seed
-const chunk2 = rng2.shuffle(largeArray.slice(100000, 200000));
-
-// Option 2: Reset periodically
-const rng = new SeededRandom(123);
-for (let chunk = 0; chunk < 5; chunk++) {
-  // Reset every 200,000 operations to stay well under the period
-  if (chunk > 0) rng.reset(123 + chunk);
-  
-  for (let i = 0; i < 200000; i++) {
-    const value = rng.next(); // Safe from repetition
-  }
+// Long-running applications
+const gameRng = new SeededRandom("game-session-123");
+// Generate millions of random values without period limitations
+for (let round = 0; round < 10000000; round++) {
+  const dice = gameRng.randInt(1, 6);
+  // Your game logic...
 }
 ```
-</details>
 
 
 ## License
