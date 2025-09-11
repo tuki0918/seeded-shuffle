@@ -1,6 +1,6 @@
 {
   "name": "@tuki0918/seeded-shuffle",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A pseudo-random array shuffling library using Permuted Congruential Generator (PCG) for high-quality randomness with 2^64 period.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
