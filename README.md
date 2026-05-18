@@ -53,6 +53,26 @@ This library uses a Permuted Congruential Generator (PCG) algorithm for high-qua
 > [!WARNING]
 > This is not suitable for cryptographic purposes.
 
+## Benchmarks
+
+Run the benchmark suite to compare the current implementation with the latest
+stable baseline tag:
+
+```bash
+npm run benchmark
+```
+
+The benchmark uses `node:perf_hooks` and compares `v1.0.1` with `HEAD` by
+default. Override the comparison refs when needed:
+
+```bash
+BENCH_BASE_REF=v1.0.1 BENCH_CANDIDATE_REF=HEAD npm run benchmark
+```
+
+CI runs a shorter benchmark job with `npm run benchmark:ci` on Node.js 22. The
+CI job is intended to keep the benchmark script operational and publish timing
+logs; use local benchmark results for performance release notes.
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.

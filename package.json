@@ -11,6 +11,8 @@
     "build": "tsc -p tsconfig.build.json",
     "build:check": "tsc -p tsconfig.build.json --noEmit",
     "build:typecheck": "tsc --noEmit",
+    "benchmark": "node --expose-gc scripts/benchmark.mjs",
+    "benchmark:ci": "node --expose-gc scripts/benchmark.mjs --ci",
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "prepare": "husky",
