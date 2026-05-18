@@ -123,20 +123,23 @@ export class SeededRandom {
       );
     }
 
-    const result: T[] = [];
+    const result: T[] = Number.isInteger(count) ? new Array(count) : [];
 
     if (!unique) {
       // With replacement (duplicates allowed)
       for (let i = 0; i < count; i++) {
-        result.push(this.choice(array));
+        const index = Math.floor(this.next() * array.length);
+        result[i] = array[index];
       }
     } else {
       // Without replacement (no duplicates)
       const availableItems = this.safeCopy(array);
+      let remaining = availableItems.length;
       for (let i = 0; i < count; i++) {
-        const index = Math.floor(this.next() * availableItems.length);
-        result.push(availableItems[index]);
-        availableItems.splice(index, 1);
+        const index = Math.floor(this.next() * remaining);
+        result[i] = availableItems[index];
+        availableItems[index] = availableItems[remaining - 1];
+        remaining--;
       }
     }
 

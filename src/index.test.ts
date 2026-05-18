@@ -777,4 +777,17 @@ describe("Performance Tests", () => {
     expect(uniqueChoices).toHaveLength(5000);
     expect(new Set(uniqueChoices).size).toBe(5000);
   });
+
+  it("should select many unique choices efficiently", () => {
+    const largeArray = Array.from({ length: 100000 }, (_, i) => i);
+    const rng = new SeededRandom(12345);
+
+    const start = performance.now();
+    const uniqueChoices = rng.choices(largeArray, 50000, { unique: true });
+    const choicesTime = performance.now() - start;
+
+    expect(choicesTime).toBeLessThan(300);
+    expect(uniqueChoices).toHaveLength(50000);
+    expect(new Set(uniqueChoices).size).toBe(50000);
+  });
 });
