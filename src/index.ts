@@ -14,14 +14,15 @@ export class SeededRandom {
     this.state3 = state[3];
   }
 
-  // xoshiro128** implementation with 128-bit state and period 2^128 - 1.
+  // xoshiro128++ implementation with 128-bit state and period 2^128 - 1.
   // This keeps seeded shuffling deterministic while avoiding BigInt on hot paths.
   next(): number {
     return this.nextUint32() / UINT32_SIZE;
   }
 
   private nextUint32(): number {
-    const result = Math.imul(rotl(Math.imul(this.state1, 5) >>> 0, 7), 9) >>> 0;
+    const result =
+      (rotl((this.state0 + this.state3) >>> 0, 7) + this.state0) >>> 0;
     const t = (this.state1 << 9) >>> 0;
 
     this.state2 = (this.state2 ^ this.state0) >>> 0;

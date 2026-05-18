@@ -1,7 +1,7 @@
 import { SeededRandom, shuffle, unshuffle } from ".";
 
 describe("SeededRandom", () => {
-  it("should produce stable xoshiro128 seeded snapshots", () => {
+  it("should produce stable xoshiro128++ seeded snapshots", () => {
     const rng = new SeededRandom(12345);
 
     const values = Array.from({ length: 8 }, () =>
@@ -9,8 +9,8 @@ describe("SeededRandom", () => {
     );
 
     expect(values).toEqual([
-      0.242549906252, 0.03597882227, 0.104078520555, 0.558639206924,
-      0.425825959072, 0.626788521884, 0.344368920894, 0.645111654419,
+      0.852998746792, 0.659741718555, 0.248757111374, 0.26293700817,
+      0.567414250923, 0.178257746156, 0.589084245497, 0.808311818866,
     ]);
     expect(
       shuffle(
@@ -18,7 +18,7 @@ describe("SeededRandom", () => {
         12345,
       ),
     ).toEqual([
-      7, 5, 15, 13, 3, 10, 2, 17, 12, 18, 14, 11, 8, 19, 16, 6, 9, 1, 0, 4,
+      11, 3, 5, 0, 14, 18, 15, 6, 1, 16, 13, 7, 10, 8, 2, 9, 19, 4, 12, 17,
     ]);
     expect(
       shuffle(
@@ -26,7 +26,7 @@ describe("SeededRandom", () => {
         "test",
       ),
     ).toEqual([
-      13, 0, 6, 14, 12, 2, 9, 11, 10, 4, 1, 15, 19, 16, 17, 18, 7, 8, 3, 5,
+      7, 4, 2, 9, 14, 18, 16, 10, 12, 5, 0, 13, 17, 1, 19, 3, 8, 15, 11, 6,
     ]);
   });
 

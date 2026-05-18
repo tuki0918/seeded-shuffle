@@ -1,6 +1,6 @@
 # seeded-shuffle
 
-A deterministic reversible array shuffling library using seedable xoshiro128** randomness.
+A deterministic reversible array shuffling library using seedable xoshiro128++ randomness.
 
 ## Features
 
@@ -46,7 +46,7 @@ console.log(restored2); // [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] - back to original!
 
 ## Algorithm
 
-This library uses xoshiro128** for deterministic pseudo-randomness:
+This library uses xoshiro128++ for deterministic pseudo-randomness:
 - **State size**: 128-bit internal state derived from number or string seeds
 - **Period**: 2^128 - 1 for non-zero generator states
 - **Performance**: 32-bit integer operations only; no BigInt in hot paths
