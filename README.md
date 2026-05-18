@@ -1,6 +1,6 @@
 # seeded-shuffle
 
-A pseudo-random array shuffling library using Permuted Congruential Generator (PCG) for high-quality randomness.
+A deterministic reversible array shuffling library using seedable xoshiro128** randomness.
 
 ## Features
 
@@ -26,11 +26,11 @@ const array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 // Using numeric seed
 const shuffled1 = shuffle(array, 12345);
-console.log(shuffled1); // [2, 9, 8, 6, 7, 10, 5, 3, 4, 1] (deterministic)
+console.log(shuffled1); // [8, 6, 5, 2, 7, 10, 4, 9, 1, 3] (deterministic)
 
 // Using string seed
 const shuffled2 = shuffle(array, "my-seed");
-console.log(shuffled2); // [9, 2, 4, 8, 10, 7, 5, 6, 3, 1] (deterministic)
+console.log(shuffled2); // [5, 9, 7, 1, 3, 6, 4, 10, 8, 2] (deterministic)
 
 // Same seed = same result
 const shuffled3 = shuffle(array, 12345);
@@ -46,9 +46,16 @@ console.log(restored2); // [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] - back to original!
 
 ## Algorithm
 
-This library uses a Permuted Congruential Generator (PCG) algorithm for high-quality randomness:
-- **Period**: 2^64 (effectively unlimited for practical purposes)
-- **Performance**: Fast generation suitable for high-volume applications
+This library uses xoshiro128** for deterministic pseudo-randomness:
+- **State size**: 128-bit internal state derived from number or string seeds
+- **Period**: 2^128 - 1 for non-zero generator states
+- **Performance**: 32-bit integer operations only; no BigInt in hot paths
+- **Reversibility**: Designed for large deterministic permutations such as
+  pixel arrays, as long as the same seed and package major version are used
+
+> [!NOTE]
+> Version 2 changes the seeded output sequence. The same seed remains
+> deterministic, but it will not produce the same shuffle order as version 1.
 
 > [!WARNING]
 > This is not suitable for cryptographic purposes.
@@ -62,8 +69,8 @@ stable baseline tag:
 npm run benchmark
 ```
 
-The benchmark uses `node:perf_hooks` and compares `v1.0.1` with `HEAD` by
-default. Override the comparison refs when needed:
+The benchmark uses `node:perf_hooks` and compares `v1.0.1` with the current
+working tree by default. Override the comparison refs when needed:
 
 ```bash
 BENCH_BASE_REF=v1.0.1 BENCH_CANDIDATE_REF=HEAD npm run benchmark

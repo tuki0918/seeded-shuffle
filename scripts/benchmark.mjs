@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { performance } from "node:perf_hooks";
@@ -15,7 +15,7 @@ const REVISIONS = [
   },
   {
     label: process.env.BENCH_CANDIDATE_LABEL ?? "candidate",
-    ref: process.env.BENCH_CANDIDATE_REF ?? "HEAD",
+    ref: process.env.BENCH_CANDIDATE_REF ?? "WORKTREE",
   },
 ];
 
@@ -85,6 +85,24 @@ const benchmarks = [
     },
   },
   {
+    name: "unshuffle(array 10,000)",
+    prepare: ({ shuffle }) => shuffle(mediumArray, 12345),
+    run: ({ unshuffle }, shuffled) => {
+      const result = unshuffle(shuffled, 12345);
+      return result[0] + result[result.length - 1];
+    },
+  },
+  {
+    name: "unshuffle(array 100,000)",
+    samples: Math.min(SAMPLE_COUNT, 5),
+    warmups: Math.min(WARMUP_COUNT, 2),
+    prepare: ({ shuffle }) => shuffle(largeArray, 12345),
+    run: ({ unshuffle }, shuffled) => {
+      const result = unshuffle(shuffled, 12345);
+      return result[0] + result[result.length - 1];
+    },
+  },
+  {
     name: "generateShuffleIndices(10,000)",
     run: ({ SeededRandom }) => {
       const rng = new SeededRandom(12345);
@@ -139,9 +157,15 @@ for (const benchmark of benchmarks) {
   for (const revision of modules) {
     const warmups = benchmark.warmups ?? WARMUP_COUNT;
     const samples = benchmark.samples ?? SAMPLE_COUNT;
+    const context = benchmark.prepare?.(revision.mod);
     result.set(
       revision.label,
-      measure(benchmark.run, revision.mod, warmups, samples),
+      measure(
+        (mod) => benchmark.run(mod, context),
+        revision.mod,
+        warmups,
+        samples,
+      ),
     );
   }
 
@@ -171,9 +195,12 @@ for (const benchmark of benchmarks) {
 console.log(`checksum: ${sink.toFixed(3)}`);
 
 async function loadRevision({ label, ref }) {
-  const source = execFileSync("git", ["show", `${ref}:src/index.ts`], {
-    encoding: "utf8",
-  });
+  const source =
+    ref === "WORKTREE"
+      ? readFileSync("src/index.ts", "utf8")
+      : execFileSync("git", ["show", `${ref}:src/index.ts`], {
+          encoding: "utf8",
+        });
   const output = ts.transpileModule(source, {
     compilerOptions: {
       target: ts.ScriptTarget.ES2022,

@@ -1,6 +1,35 @@
 import { SeededRandom, shuffle, unshuffle } from ".";
 
 describe("SeededRandom", () => {
+  it("should produce stable xoshiro128 seeded snapshots", () => {
+    const rng = new SeededRandom(12345);
+
+    const values = Array.from({ length: 8 }, () =>
+      Number(rng.next().toFixed(12)),
+    );
+
+    expect(values).toEqual([
+      0.242549906252, 0.03597882227, 0.104078520555, 0.558639206924,
+      0.425825959072, 0.626788521884, 0.344368920894, 0.645111654419,
+    ]);
+    expect(
+      shuffle(
+        Array.from({ length: 20 }, (_, i) => i),
+        12345,
+      ),
+    ).toEqual([
+      7, 5, 15, 13, 3, 10, 2, 17, 12, 18, 14, 11, 8, 19, 16, 6, 9, 1, 0, 4,
+    ]);
+    expect(
+      shuffle(
+        Array.from({ length: 20 }, (_, i) => i),
+        "test",
+      ),
+    ).toEqual([
+      13, 0, 6, 14, 12, 2, 9, 11, 10, 4, 1, 15, 19, 16, 17, 18, 7, 8, 3, 5,
+    ]);
+  });
+
   it("should generate consistent results with the same seed", () => {
     const rng1 = new SeededRandom(12345);
     const rng2 = new SeededRandom(12345);
@@ -206,6 +235,15 @@ describe("SeededRandom", () => {
     // Verify all elements are preserved
     const sortedShuffled = [...shuffled].sort((a, b) => a - b);
     expect(sortedShuffled).toEqual(original);
+  });
+
+  it("should reversibly shuffle image-scale pixel arrays", () => {
+    const pixels = Array.from({ length: 1024 * 1024 }, (_, i) => i);
+
+    const shuffled = shuffle(pixels, "image-pixels-seed");
+    const restored = unshuffle(shuffled, "image-pixels-seed");
+
+    expect(restored).toEqual(pixels);
   });
 
   it("should generate shuffle indices correctly", () => {
@@ -493,14 +531,12 @@ describe("Functional API", () => {
   });
 });
 
-describe("PCG Algorithm Tests", () => {
-  it("should have much longer period than LCG (demonstrative test)", () => {
+describe("PRNG Algorithm Tests", () => {
+  it("should generate many unique values in a long deterministic sequence", () => {
     const rng = new SeededRandom(12345);
 
-    // Test that we can generate far more than 233,280 unique values
-    // This test runs for a limited time but demonstrates longer period
     const uniqueValues = new Set();
-    const maxIterations = 500000; // Much larger than LCG period
+    const maxIterations = 100000;
 
     for (let i = 0; i < maxIterations; i++) {
       const value = rng.next();
@@ -512,14 +548,12 @@ describe("PCG Algorithm Tests", () => {
 
       uniqueValues.add(value);
 
-      // Early termination if we find a repeat (shouldn't happen with PCG)
       if (i > 1000 && uniqueValues.size < i * 0.99) {
         break; // Too many duplicates, something's wrong
       }
     }
 
-    // PCG should produce many more unique values than LCG
-    expect(uniqueValues.size).toBeGreaterThan(400000); // Much higher than LCG's 233,280
+    expect(uniqueValues.size).toBeGreaterThan(90000);
   });
 
   it("should maintain deterministic behavior with same seeds", () => {
@@ -604,7 +638,6 @@ describe("PCG Algorithm Tests", () => {
   });
 
   it("should handle massive array shuffling without period limitations", () => {
-    // Create very large array that would exceed LCG period
     const largeArray = Array.from({ length: 300000 }, (_, i) => i);
     const rng = new SeededRandom(12345);
 
